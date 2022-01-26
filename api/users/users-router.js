@@ -3,8 +3,8 @@ const router = require("express").Router();
 const Users = require("./users-model");
 
 router.get("/", async (req, res, next) => {
-  Users.find(users => {
-    console.log(users)
+  await Users.find(users => {
+    res.json(users)
   })
   next()
 });

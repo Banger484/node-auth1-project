@@ -1,4 +1,4 @@
-const U = require('../users/users-model')
+const U = require("../users/users-model");
 
 /*
   If the user does not have a session saved in the server
@@ -8,8 +8,14 @@ const U = require('../users/users-model')
     "message": "You shall not pass!"
   }
 */
-function restricted() {
-
+function restricted(req, res, next) {
+  if (req.session.user) {
+    next();
+  } else {
+    res.status(401).json({
+      message: "You shall not pass!",
+    });
+  }
 }
 
 /*
@@ -22,19 +28,17 @@ function restricted() {
 */
 async function checkUsernameFree(req, res, next) {
   try {
-    console.log(req.body.username)
-    const existing = await U.findByUsername(req.body.username)
-    if(!existing) {
-      console.log('username not taken')
-      next()
+    const existing = await U.findByUsername(req.body.username);
+    if (!existing) {
+      next();
     } else {
       res.status(422).json({
-        message: 'Username taken'
-      })
-      next()
+        message: "Username taken",
+      });
+      next();
     }
   } catch (err) {
-    next(err)
+    next(err);
   }
 }
 
@@ -46,8 +50,21 @@ async function checkUsernameFree(req, res, next) {
     "message": "Invalid credentials"
   }
 */
-function checkUsernameExists() {
-
+async function checkUsernameExists(req, res, next) {
+  try {
+    const users = await U.findBy({ username: req.body.username });
+    if (users.length) {
+      req.user = users[0];
+      next();
+    } else {
+      res.status(401).json({
+        message: "Invalid credentials",
+      });
+      next();
+    }
+  } catch (err) {
+    next(err);
+  }
 }
 
 /*
@@ -59,16 +76,16 @@ function checkUsernameExists() {
   }
 */
 function checkPasswordLength(req, res, next) {
-  if(!req.body.password) {
+  if (!req.body.password) {
     res.status(422).json({
-      message: "Password must be longer than 3 chars"
-    })
-  } else if(req.body.password.length < 4) {
+      message: "Password must be longer than 3 chars",
+    });
+  } else if (req.body.password.length < 4) {
     res.status(422).json({
-      message: "Password must be longer than 3 chars"
-    })
+      message: "Password must be longer than 3 chars",
+    });
   } else {
-    next()
+    next();
   }
 }
 
@@ -79,4 +96,4 @@ module.exports = {
   checkUsernameFree,
   checkUsernameExists,
   checkPasswordLength,
-}
+};
